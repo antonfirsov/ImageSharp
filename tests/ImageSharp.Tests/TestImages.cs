@@ -46,9 +46,36 @@ namespace ImageSharp.Tests
             public static string Progress => folder + "progress.jpg";
             public static string GammaDalaiLamaGray => folder + "gamma_dalai_lama_gray.jpg";
 
+            public static class ImageTestSuite
+            {
+                private static readonly string folder = Jpeg.folder + "imagetestsuite/";
+
+                public static string Festzug => folder + "Festzug.jpg";
+                public static string Gray1 => folder + "Festzug.jpg";
+                public static string Gray2 => folder + "Festzug.jpg";
+                public static string Hiyamugi => folder + "Hiyamugi.jpg";
+
+                // TODO: Add to corrupted collection:
+                public static string LongVertical1 => folder + "LongVertical1.jpg";
+                public static string LongVertical2 => folder + "LongVertical2.jpg";
+            }
+
+            public static class Qualities
+            {
+                private static readonly string folder = Jpeg.folder + "qualities/";
+
+                public static string Q60 => folder + "Q60.jpg";
+                public static string Q70 => folder + "Q70.jpg";
+                public static string Q80 => folder + "Q80.jpg";
+                public static string Q90 => folder + "Q90.jpg";
+            }
+
 
             public static readonly string[] All = {
-                Cmyk, Exif, Floorplan, Calliphora, Turtle, Fb, Progress, GammaDalaiLamaGray
+                Cmyk, Exif, Floorplan, Calliphora, Turtle, Fb, Progress, GammaDalaiLamaGray,
+                ImageTestSuite.Festzug, ImageTestSuite.Gray1, ImageTestSuite.Gray2, ImageTestSuite.Hiyamugi,
+                //ImageTestSuite.LongVertical1, ImageTestSuite.LongVertical2, // TODO: Add to corrupted collection
+                Qualities.Q60, Qualities.Q70, Qualities.Q80, Qualities.Q90,
             };
         }
 
