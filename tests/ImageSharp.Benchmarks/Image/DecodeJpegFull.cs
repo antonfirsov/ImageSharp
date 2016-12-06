@@ -5,6 +5,8 @@ using BenchmarkDotNet.Attributes;
 
 namespace ImageSharp.Benchmarks.Image
 {
+    using ImageSharpSize = ImageSharp.Size;
+
     public class DecodeJpegFull
     {
         private Dictionary<string, byte[]> fileNamesToBytes;
@@ -63,15 +65,15 @@ namespace ImageSharp.Benchmarks.Image
         }
 
         [Benchmark(Description = "DecodeJpegFull - ImageSharp")]
-        public Size JpegImageSharp()
+        public ImageSharpSize JpegImageSharp()
         {
-            Size lastSize = new Size();
+            ImageSharpSize lastSize = new ImageSharpSize();
             foreach (byte[] data in RequestedImageBytes)
             {
                 using (MemoryStream memoryStream = new MemoryStream(data))
                 {
                     ImageSharp.Image image = new ImageSharp.Image(memoryStream);
-                    return new Size(image.Width, image.Height);
+                    lastSize = new ImageSharpSize(image.Width, image.Height);
                 }
             }
             return lastSize;
