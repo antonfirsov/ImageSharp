@@ -8,16 +8,17 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Running;
 using ImageSharp.Benchmarks.Image;
 
+
 namespace ImageSharp.Benchmarks46
 {
     class Program
     {
         static void Main(string[] args)
         {
-            //var cfg = ManualConfig.CreateEmpty();
-            //cfg.Add(new MemoryDiagnoser());
-
-            //BenchmarkRunner.Run<DecodeJpegFull>(cfg);
+            BenchmarkJpegTests test = new BenchmarkJpegTests();
+            Console.WriteLine("DecodeJpegFull_JpegImageSharp ..");
+            test.DecodeJpegFull_JpegImageSharp(DecodeJpegFull.JpegTestingMode.All, 10);
+            Console.WriteLine("Done.");
         }
     }
 }

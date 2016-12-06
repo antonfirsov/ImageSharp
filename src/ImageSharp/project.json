@@ -32,9 +32,9 @@
       "version": "1.0.0",
       "type": "build"
     },
-    "System.Buffers": "4.0.0",
-    "System.Numerics.Vectors": "4.1.1",
-    "System.Runtime.CompilerServices.Unsafe": "4.0.0"
+    "System.Buffers": "4.3.0",
+    "System.Numerics.Vectors": "4.3.0",
+    "System.Runtime.CompilerServices.Unsafe": "4.3.0"
   },
   "frameworks": {
     "netstandard1.1": {

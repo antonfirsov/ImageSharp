@@ -1,21 +1,15 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
 using ImageSharp.Formats;
 using Xunit.Abstractions;
 
 namespace ImageSharp.Tests.Formats.Jpg
 {
-    public class UtilityTestClassBase
+    public class UtilityTestClassBase : MeasureFixture
     {
-        public UtilityTestClassBase(ITestOutputHelper output)
+        public UtilityTestClassBase(ITestOutputHelper output) : base(output)
         {
-            Output = output;
         }
-
-        protected ITestOutputHelper Output { get; }
-
+        
         // ReSharper disable once InconsistentNaming
         public static float[] Create8x8FloatData()
         {
@@ -78,18 +72,5 @@ namespace ImageSharp.Tests.Formats.Jpg
             Output.WriteLine(bld.ToString());
         }
 
-        protected void Measure(int times, Action action, [CallerMemberName] string operationName = null)
-        {
-            Output.WriteLine($"{operationName} X {times} ...");
-            Stopwatch sw = Stopwatch.StartNew();
-
-            for (int i = 0; i < times; i++)
-            {
-                action();
-            }
-
-            sw.Stop();
-            Output.WriteLine($"{operationName} finished in {sw.ElapsedMilliseconds} ms");
-        }
     }
 }
