@@ -6,6 +6,7 @@
 namespace ImageSharp
 {
     using System;
+    using System.Buffers;
     using System.Diagnostics;
 
     /// <summary>
@@ -15,7 +16,7 @@ namespace ImageSharp
     /// <typeparam name="TColor">The pixel format.</typeparam>
     /// <typeparam name="TPacked">The packed format. <example>uint, long, float.</example></typeparam>
     [DebuggerDisplay("Image: {Width}x{Height}")]
-    public abstract class ImageBase<TColor, TPacked> : IImageBase<TColor, TPacked>
+    public abstract class ImageBase<TColor, TPacked> : IImageBase<TColor, TPacked>, IDisposable
         where TColor : struct, IPackedPixel<TPacked>
         where TPacked : struct
     {
@@ -97,6 +98,8 @@ namespace ImageSharp
         /// <inheritdoc/>
         public int FrameDelay { get; set; }
 
+        private static readonly ArrayPool<TColor> PixelPool = ArrayPool<TColor>.Create(1 << 24, 50);
+
         /// <inheritdoc/>
         public void InitPixels(int width, int height)
         {
@@ -105,7 +108,8 @@ namespace ImageSharp
 
             this.Width = width;
             this.Height = height;
-            this.pixelBuffer = new TColor[width * height];
+            //this.pixelBuffer = new TColor[width * height];
+            this.pixelBuffer = PixelPool.Rent(width * height);
         }
 
         /// <inheritdoc/>
@@ -161,6 +165,15 @@ namespace ImageSharp
         {
             this.Quality = other.Quality;
             this.FrameDelay = other.FrameDelay;
+        }
+
+        public void Dispose()
+        {
+            if (this.pixelBuffer == null) return;
+
+            PixelPool.Return(this.pixelBuffer, true);
+            this.pixelBuffer = null;
+            //throw new NotImplementedException();
         }
     }
 }

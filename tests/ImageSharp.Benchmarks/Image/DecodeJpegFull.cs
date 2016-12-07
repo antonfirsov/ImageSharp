@@ -53,8 +53,10 @@
             {
                 using (MemoryStream memoryStream = new MemoryStream(data))
                 {
-                    Image image = new ImageSharp.Image(memoryStream);
-                    lastSize = new ImageSharpSize(image.Width, image.Height);
+                    using (Image image = new ImageSharp.Image(memoryStream))
+                    {
+                        lastSize = new ImageSharpSize(image.Width, image.Height);
+                    }
                 }
             }
 
