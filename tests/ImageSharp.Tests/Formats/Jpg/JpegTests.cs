@@ -16,6 +16,8 @@ namespace ImageSharp.Tests
 {
     using System.Numerics;
 
+    using ImageProcessorCore.Formats;
+
     using ImageSharp.Formats.Jpg;
     using ImageSharp.Processing;
 
@@ -45,6 +47,8 @@ namespace ImageSharp.Tests
 
             provider.Utility.SaveTestOutputFile(image, "jpg", encoder);
             provider.Utility.SaveTestOutputFile(image, "png");
+            provider.Utility.TestName += "_OLD_NEW_";
+            provider.Utility.SaveTestOutputFile(image, "jpg", new JpegEncoder2());
         }
 
 
