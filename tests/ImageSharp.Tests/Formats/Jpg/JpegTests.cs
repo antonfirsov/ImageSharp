@@ -17,6 +17,7 @@ namespace ImageSharp.Tests
     using System.Numerics;
 
     using ImageSharp.Formats.Jpg;
+    using ImageSharp.Processing;
 
     public class JpegTests : MeasureFixture
     {
@@ -24,6 +25,28 @@ namespace ImageSharp.Tests
             : base(output)
         {
         }
+
+        [Theory]
+        //[WithFile(TestImages.Jpeg.Snake, PixelTypes.StandardImageClass)]
+        [WithFile(TestImages.Jpeg.Lake, PixelTypes.StandardImageClass)]
+        public void LoadResizeSave<TColor>(TestImageProvider<TColor> provider)
+            where TColor : struct, IPackedPixel, IEquatable<TColor>
+        {
+            var image = provider.GetImage()
+                .Resize(new ResizeOptions
+                {
+                    Size = new Size(150, 150),
+                    Mode = ResizeMode.Max
+                });
+            image.Quality = 75;
+            JpegEncoder encoder = new JpegEncoder();
+            encoder.Subsample = JpegSubsample.Ratio420;
+            encoder.Quality = 75;
+
+            provider.Utility.SaveTestOutputFile(image, "jpg", encoder);
+            provider.Utility.SaveTestOutputFile(image, "png");
+        }
+
 
         public static IEnumerable<string> AllJpegFiles => TestImages.Jpeg.All;
 
