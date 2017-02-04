@@ -7,6 +7,7 @@ namespace ImageSharp
 {
     using System;
     using System.Numerics;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// An interface that converts packed vector types to and from <see cref="Vector4"/> values,
@@ -38,6 +39,7 @@ namespace ImageSharp
         /// The vector components are typically expanded in least to greatest significance order.
         /// </summary>
         /// <returns>The <see cref="Vector4"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         Vector4 ToVector4();
     }
 }
