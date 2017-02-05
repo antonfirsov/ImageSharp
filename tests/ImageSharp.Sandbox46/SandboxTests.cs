@@ -15,6 +15,15 @@ namespace ImageSharp.Sandbox46
         {
             this.Output = output;
         }
+
+        [Fact]
+        public void HelloSpan()
+        {
+            int[] data = new[] { 1, 2, 3 };
+            Span<int> span = new Span<int>(data);
+
+            Assert.Equal(span[1], 2);
+        }
         
         private static void ColorFoo<TColor>(TColor[] input, Vector4[] result)
             where TColor : struct, IPackedPixel, IEquatable<TColor>
