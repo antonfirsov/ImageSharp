@@ -83,6 +83,18 @@
         }
 
         [Benchmark]
+        public void StandardSpansMainCallIsInlined()
+        {
+            Span<Color> input = new Span<Color>(this.input);
+            Span<Vector4> result = new Span<Vector4>(this.result);
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                result.GetItem(i) = input[i].ToVector4();
+            }
+        }
+        
+        [Benchmark]
         public void BatchedSpans()
         {
             ColorToVector4BatchedSpans(this.input, this.result);
@@ -90,27 +102,6 @@
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ColorToVector4BatchedSpans(Span<Color> input, Span<Vector4> result)
-        {
-            Color c;
-            Vector4 v;
-            Vector4 maxBytes = new Vector4(255);
-            for (int i = 0; i < input.Length; i++)
-            {
-                c = input.GetItem(i);
-                v = new Vector4(c.R, c.G, c.B, c.A);
-                v /= maxBytes;
-                result.GetItem(i) = v;
-            }
-        }
-        
-        [Benchmark]
-        public void BatchedSpansCopyLess()
-        {
-            ColorToVector4BatchedSpansCopyLess(this.input, this.result);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ColorToVector4BatchedSpansCopyLess(Span<Color> input, Span<Vector4> result)
         {
             Vector4 v;
             Vector4 maxBytes = new Vector4(255);
