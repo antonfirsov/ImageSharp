@@ -202,6 +202,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\ImageSharp.Tests\Colors\ExperimentalConvertersTests.cs">
+      <Link>Tests\Colors\ExperimentalConvertersTests.cs</Link>
+    </Compile>
     <Compile Include="..\ImageSharp.Tests\Drawing\PolygonTests.cs">
       <Link>Tests\Drawing\PolygonTests.cs</Link>
     </Compile>
@@ -258,6 +261,9 @@
     </Compile>
     <Compile Include="..\ImageSharp.Tests\TestImages.cs">
       <Link>Tests\TestImages.cs</Link>
+    </Compile>
+    <Compile Include="..\ImageSharp.Tests\TestUtilities\ApproximateFloatComparer.cs">
+      <Link>Tests\TestUtilities\ApproximateFloatComparer.cs</Link>
     </Compile>
     <Compile Include="..\ImageSharp.Tests\TestUtilities\Attributes\ImageDataAttributeBase.cs">
       <Link>Tests\TestUtilities\Attributes\ImageDataAttributeBase.cs</Link>
