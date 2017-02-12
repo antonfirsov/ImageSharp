@@ -14,7 +14,8 @@
 
         private Vector4[] result;
 
-        [Params(16, 32, 256)]
+        //[Params(16, 32, 256)]
+        [Params(256)]
         public int InputSize { get; set; }
 
         [Setup]
@@ -68,7 +69,7 @@
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void BithackBatched()
         {
             ExperimentalConverters.ColorToVector4BithackBatchedArrays(this.input, this.result);
