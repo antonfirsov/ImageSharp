@@ -97,8 +97,8 @@ namespace ImageSharp.Processing.Processors
                                     {
                                         // Ensure offsets are normalised for cropping and padding.
 
-                                        var ws = this.HorizontalWeights[x - startX];
-                                        float[] horizontalValues = ws.Values;
+                                        Weights ws = this.HorizontalWeights.Weights[x - startX];
+                                        float* horizontalValues = ws.Values;
                                         int left = ws.LeftIndex;
 
                                         // Destination color components
@@ -125,8 +125,8 @@ namespace ImageSharp.Processing.Processors
                             y =>
                                 {
                                     // Ensure offsets are normalised for cropping and padding.
-                                    var ws = this.VerticalWeights[y - startY];
-                                    float[] verticalValues = ws.Values;
+                                    var ws = this.VerticalWeights.Weights[y - startY];
+                                    float* verticalValues = ws.Values;
                                     int left = ws.LeftIndex;
 
                                     for (int x = 0; x < width; x++)
@@ -243,8 +243,8 @@ namespace ImageSharp.Processing.Processors
                                 for (int x = minX; x < maxX; x++)
                                 {
                                     // Ensure offsets are normalised for cropping and padding.
-                                    var ws = this.HorizontalWeights[x - startX];
-                                    float[] horizontalValues = ws.Values;
+                                    Weights ws = this.HorizontalWeights.Weights[x - startX];
+                                    float* horizontalValues = ws.Values;
                                     int index = ws.LeftIndex;
 
                                     // Destination color components
@@ -270,8 +270,8 @@ namespace ImageSharp.Processing.Processors
                         y =>
                             {
                                 // Ensure offsets are normalised for cropping and padding.
-                                var ws = this.VerticalWeights[y - startY];
-                                float[] verticalValues = ws.Values;
+                                Weights ws = this.VerticalWeights.Weights[y - startY];
+                                float* verticalValues = ws.Values;
                                 int left = ws.LeftIndex;
 
                                 for (int x = 0; x < width; x++)

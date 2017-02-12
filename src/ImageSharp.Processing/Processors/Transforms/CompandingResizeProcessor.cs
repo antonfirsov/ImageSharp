@@ -46,7 +46,7 @@ namespace ImageSharp.Processing.Processors
         public override bool Compand { get; set; } = true;
 
         /// <inheritdoc/>
-        protected override void OnApply(ImageBase<TColor> source, Rectangle sourceRectangle)
+        protected override unsafe void OnApply(ImageBase<TColor> source, Rectangle sourceRectangle)
         {
             // Jump out, we'll deal with that later.
             if (source.Width == this.Width && source.Height == this.Height && sourceRectangle == this.ResizeRectangle)
@@ -117,9 +117,9 @@ namespace ImageSharp.Processing.Processors
                             for (int x = minX; x < maxX; x++)
                             {
                                 // Ensure offsets are normalised for cropping and padding.
-                                Weights ws = this.HorizontalWeights[x - startX];
+                                Weights ws = this.HorizontalWeights.Weights[x - startX];
                                 int left = ws.LeftIndex;
-                                float[] horizontalValues = ws.Values;
+                                float* horizontalValues = ws.Values;
 
                                 // Destination color components
                                 Vector4 destination = Vector4.Zero;
@@ -145,9 +145,9 @@ namespace ImageSharp.Processing.Processors
                         y =>
                         {
                             // Ensure offsets are normalised for cropping and padding.
-                            Weights ws = this.VerticalWeights[y - startY];
+                            Weights ws = this.VerticalWeights.Weights[y - startY];
                             int left = ws.LeftIndex;
-                            float[] verticalValues = ws.Values;
+                            float* verticalValues = ws.Values;
 
                             for (int x = 0; x < width; x++)
                             {
