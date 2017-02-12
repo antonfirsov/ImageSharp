@@ -35,7 +35,7 @@
             }
         }
 
-        [Benchmark(Baseline = true)]
+        //[Benchmark(Baseline = true)]
         public void Standard()
         {
             ColorToVector4StandardArrays(this.input, this.result);
@@ -51,7 +51,7 @@
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void Bithack()
         {
             ColorToVector4Bithack(this.input, this.result);

@@ -9,6 +9,7 @@ namespace ImageSharp.Sandbox46
     using System.Runtime.DesignerServices;
 
     using ImageSharp.Tests;
+    using ImageSharp.Tests.Colors;
 
     using Xunit.Abstractions;
 
@@ -36,7 +37,15 @@ namespace ImageSharp.Sandbox46
         /// </param>
         public static void Main(string[] args)
         {
-            RunDecodeJpegProfilingTests();
+            //RunDecodeJpegProfilingTests();
+
+            RunColorConverterBenchmarkTests();
+        }
+
+        private static void RunColorConverterBenchmarkTests()
+        {
+            ExperimentalConvertersTests tests = new ExperimentalConvertersTests(new ConsoleOutput());
+            tests.ColorToVector4BithackBatchedArraysBenchmark();
         }
 
         private static void RunDecodeJpegProfilingTests()

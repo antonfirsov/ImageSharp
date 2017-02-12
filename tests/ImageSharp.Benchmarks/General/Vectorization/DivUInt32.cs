@@ -1,16 +1,16 @@
-﻿namespace ImageSharp.Benchmarks.General
+namespace ImageSharp.Benchmarks.General.Vectorization
 {
     using System.Numerics;
 
     using BenchmarkDotNet.Attributes;
 
-    public class BitwiseOrUint32
+    public class DivUInt32
     {
         private uint[] input;
 
         private uint[] result;
 
-        [Params(16, 64)]
+        [Params(32)]
         public int InputSize { get; set; }
 
         private uint testValue;
@@ -24,7 +24,7 @@
 
             for (int i = 0; i < this.InputSize; i++)
             {
-                this.input[i] = (uint) i;
+                this.input[i] = (uint)i;
             }
         }
 
@@ -34,7 +34,7 @@
             uint v = this.testValue;
             for (int i = 0; i < this.input.Length; i++)
             {
-                this.result[i] = this.input[i] | v;
+                this.result[i] = this.input[i] / v;
             }
         }
 
@@ -43,10 +43,10 @@
         {
             Vector<uint> v = new Vector<uint>(this.testValue);
 
-            for (int i = 0; i < this.input.Length; i+=Vector<uint>.Count)
+            for (int i = 0; i < this.input.Length; i += Vector<uint>.Count)
             {
                 Vector<uint> a = new Vector<uint>(this.input, i);
-                a = Vector.BitwiseOr(a, v);
+                a = a / v;
                 a.CopyTo(this.result, i);
             }
         }

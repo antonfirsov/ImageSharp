@@ -94,20 +94,16 @@ namespace ImageSharp.Experimental
         }
 
         internal static readonly ArrayPool<uint> UIntPool = ArrayPool<uint>.Create(1024 * 128, 50);
+        internal static readonly ArrayPool<float> FloatPool = ArrayPool<float>.Create(1024 * 128, 50);
 
-        internal static Vector<uint> GetUnpackVector()
-        {
-            uint[] a = UIntPool.Rent(Vector<uint>.Count);
-            a[0] = 0;
-            a[1] = 256;
-            a[2] = 256 * 256;
-            a[3] = 256 * 256 * 256;
+        private static readonly uint[] UnpackVectorData =
+                    {
+                        1, 256, 256 * 256, 256 * 256 * 256,
+                        1, 1, 1, 1,
+                        1, 1, 1, 1, 1, 1, 1, 1,
+                    };
 
-            Vector<uint> result = new Vector<uint>(a);
-            UIntPool.Return(a);
-            return result;
-        }
-
+        
         /// <summary>
         /// Lol
         /// </summary>
@@ -120,16 +116,16 @@ namespace ImageSharp.Experimental
                 throw new ArgumentException();
             }
 
-            //uint[] temp = UIntPool.Rent(result.Length + Vector<uint>.Count);
-            Vector<uint> unpack = GetUnpackVector();
-            //Buffer.BlockCopy(input, 0, temp, 0, input.Length);
+            Vector<uint> unpack = new Vector<uint>(UnpackVectorData);
             Vector<uint> magic = new Vector<uint>(Magic.UInt);
+            Vector<uint> mask = new Vector<uint>(255);
 
             for (int i = 0; i < input.Length; i++)
             {
                 int i4 = i * 4;
                 Vector<uint> v = new Vector<uint>(input[i].PackedValue);
                 v /= unpack;
+                v &= mask;
                 v |= magic;
 
                 v.CopyTo(result, i4);
@@ -147,20 +143,36 @@ namespace ImageSharp.Experimental
         /// Lolz
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ColorToVector4BithackBatchedArrays(Color[] input, Vector4[] result)
+        public static unsafe void ColorToVector4BithackBatchedArrays(Color[] input, Vector4[] result)
         {
-            Vector4 bVec = new Vector4(Magic.B);
-            Vector4 magicVec = new Vector4(Magic.Float);
+            Vector<float> bVec = new Vector<float>(Magic.B);
+            Vector<uint> unpack = new Vector<uint>(UnpackVectorData);
+            Vector<uint> magicInt = new Vector<uint>(Magic.UInt);
+            Vector<float> magicFloat = new Vector<float>(Magic.Float);
+            Vector<uint> mask = new Vector<uint>(255);
 
-            Bum bum = default(Bum);
-            
+            float[] temp = FloatPool.Rent(input.Length * 4 + Vector<float>.Count);
+
             for (int i = 0; i < input.Length; i++)
             {
-                bum.Load(input[i]);
-                Vector4 v = bum.ToVector4();
-                result[i] = (v - magicVec) * bVec;
+                
+                Vector<uint> vi = new Vector<uint>(input[i].PackedValue);
+                
+                vi /= unpack;
+                vi &= mask;
+                vi |= magicInt;
+
+                Vector<float> vf =  Vector.AsVectorSingle(vi);
+                vf = (vf - magicFloat) * bVec;
+                vf.CopyTo(temp, i * 4);
+            }
+
+            fixed (Vector4* resultPtr  = result)
+            {
+                Marshal.Copy(temp, 0, (IntPtr)resultPtr, input.Length * 4);
             }
             
+            FloatPool.Return(temp);
         }
     }
 }
