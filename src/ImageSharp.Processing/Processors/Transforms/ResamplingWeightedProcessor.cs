@@ -6,6 +6,7 @@
 namespace ImageSharp.Processing.Processors
 {
     using System;
+    using System.Buffers;
 
     /// <summary>
     /// Provides methods that allow the resizing of images using various algorithms.
@@ -116,14 +117,16 @@ namespace ImageSharp.Processing.Processors
                 }
 
                 float sum = 0;
-                result[i] = new Weights();
-                Weight[] weights = new Weight[right - left + 1];
+                
+                result[i] = new Weights(left, right);
+                float[] weights = result[i].Values;
+                //Weight[] weights = new Weight[right - left + 1];
 
                 for (int j = left; j <= right; j++)
                 {
                     float weight = sampler.GetValue((j - center) / scale);
                     sum += weight;
-                    weights[j - left] = new Weight(j, weight);
+                    weights[j - left] = weight;
                 }
 
                 // Normalise, best to do it here rather than in the pixel loop later on.
@@ -131,11 +134,9 @@ namespace ImageSharp.Processing.Processors
                 {
                     for (int w = 0; w < weights.Length; w++)
                     {
-                        weights[w].Value = weights[w].Value / sum;
+                        weights[w] = weights[w] / sum;
                     }
                 }
-
-                result[i].Values = weights;
             }
 
             return result;
@@ -174,9 +175,36 @@ namespace ImageSharp.Processing.Processors
         protected class Weights
         {
             /// <summary>
-            /// Gets or sets the values.
+            /// sdads
             /// </summary>
-            public Weight[] Values { get; set; }
+            public int LeftIndex { get; }
+            /// <summary>
+            /// asda
+            /// </summary>
+            public int RightIndex { get; }
+
+            public int Count => this.RightIndex - this.LeftIndex;
+            
+            public float[] Values { get; }
+
+            private static readonly ArrayPool<float> ArrayPool = ArrayPool<float>.Create(1024 * 16, 50);
+
+            /// <summary>
+            /// adsda
+            /// </summary>
+            /// <param name="leftIndex"></param>
+            /// <param name="rightIndex"></param>
+            public Weights(int leftIndex, int rightIndex)
+            {
+                this.LeftIndex = leftIndex;
+                this.RightIndex = rightIndex;
+                this.Values = ArrayPool.Rent(this.Count);
+            }
+
+            ///// <summary>
+            ///// Gets or sets the values.
+            ///// </summary>
+            //public Weight[] Values { get; set; }
         }
     }
 }

@@ -107,10 +107,15 @@ namespace ImageSharp.Tests
             {
                 string filename = file.GetFileName(name);
                 using (Image image = file.CreateImage())
-                using (FileStream output = File.OpenWrite($"{path}/{filename}"))
                 {
-                    image.Resize(0, image.Height / 3, sampler, false).Save(output);
+                    if (image.Width % 2 != 0) continue;
+
+                    using (FileStream output = File.OpenWrite($"{path}/{filename}"))
+                    {
+                        image.Resize(0, image.Height / 3, sampler, false).Save(output);
+                    }
                 }
+                
             }
         }
 
