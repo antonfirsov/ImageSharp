@@ -39,7 +39,16 @@ namespace ImageSharp.Sandbox46
         {
             //RunDecodeJpegProfilingTests();
 
-            RunColorConverterBenchmarkTests();
+            //RunColorConverterBenchmarkTests();
+
+            RunResizeBenchmarkTests();
+        }
+
+        private static void RunResizeBenchmarkTests()
+        {
+            ResizeProfilingBenchmarks tests = new ResizeProfilingBenchmarks(new ConsoleOutput());
+            tests.ExecutionCount = 20;
+            tests.ResizeBicubic(2000, 2000);
         }
 
         private static void RunColorConverterBenchmarkTests()

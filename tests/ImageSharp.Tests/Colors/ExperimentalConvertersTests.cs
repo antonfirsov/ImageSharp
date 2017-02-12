@@ -35,6 +35,20 @@ namespace ImageSharp.Tests.Colors
 
             Assert.Equal(expected, actual, new ApproximateFloatComparer(0.01f));
         }
+
+        //[Theory]
+        //[InlineData(0.1f, 0.2f, 0.3f, 0.4f)]
+        //[InlineData(0.11f, 0.22f, 0.33f, 1.0f)]
+        //[InlineData(0.111f, 0.222f, 0.333f, 1.1f)]
+        //public void Vector4ToColorFast(float x, float y, float z, float w)
+        //{
+        //    Vector4 v = new Vector4(x, y, z, w);
+
+        //    Color actual = ExperimentalConverters.Vector4ToColorFast(v);
+        //    Color expected = new Color(v);
+
+        //    Assert.Equal(actual, expected);
+        //}
         
         private static Color[] GenerateColorInput(int count)
         {
@@ -62,7 +76,7 @@ namespace ImageSharp.Tests.Colors
             Color[] input = GenerateColorInput(inputSize);
             Vector4[] result = new Vector4[input.Length + 2];
 
-            ExperimentalConverters.ColorToVector4BithackBatchedArrays(input, result);
+            ExperimentalConverters.ColorToVector4BithackBatched(input, result);
 
             for (int i = 0; i < input.Length; i++)
             {
@@ -99,7 +113,7 @@ namespace ImageSharp.Tests.Colors
                 1000000,
                 () =>
                     {
-                        ExperimentalConverters.ColorToVector4BithackBatchedArrays(input, result);
+                        ExperimentalConverters.ColorToVector4BithackBatched(input, result);
                     });
         }
     }

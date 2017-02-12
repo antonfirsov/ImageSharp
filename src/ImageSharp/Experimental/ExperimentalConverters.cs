@@ -90,30 +90,30 @@ namespace ImageSharp.Experimental
             }
         }
 
-
         /// <summary>
-        /// Lolz
+        /// Foo
         /// </summary>
+        /// <param name="sourcePtr"></param>
+        /// <param name="destPtr"></param>
+        /// <param name="count"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void ColorToVector4BithackBatchedArrays(Color[] input, Vector4[] result)
+        public static unsafe void ColorToVector4BithackBatched(Color* sourcePtr, Vector4* destPtr, int count)
         {
             Vector<float> bVec = new Vector<float>(Magic.B);
             Vector<uint> magicInt = new Vector<uint>(Magic.UInt);
             Vector<float> magicFloat = new Vector<float>(Magic.Float);
             Vector<uint> mask = new Vector<uint>(255);
 
-            int rawInputSize = input.Length * 4;
+            int rawInputSize = count * 4;
             int vecSize = Vector<uint>.Count;
 
             uint[] temp = UIntPool.Rent(rawInputSize + Vector<uint>.Count);
             float[] fTemp = Unsafe.As<float[]>(temp);
 
-
             fixed (uint* tPtr = temp)
-            fixed (Color* cPtr = input)
             {
-                uint* src = (uint*)cPtr;
-                uint* srcEnd = src + input.Length;
+                uint* src = (uint*)sourcePtr;
+                uint* srcEnd = src + count;
                 RGBAUint* dst = (RGBAUint*)tPtr;
 
                 for (; src < srcEnd; src++, dst++)
@@ -133,27 +133,35 @@ namespace ImageSharp.Experimental
                     vf.CopyTo(fTemp, i);
                 }
 
+                uint byteCount = (uint)rawInputSize * sizeof(float);
 
-
-                fixed (Vector4* p = result)
+                if (byteCount > 1024u)
                 {
-                    uint byteCount = (uint)rawInputSize * sizeof(float);
-
-                    if (byteCount > 1024u)
-                    {
-                        Marshal.Copy(fTemp, 0, (IntPtr)p, rawInputSize);
-                    }
-                    else
-                    {
-                        Unsafe.CopyBlock(p, tPtr, (uint)byteCount);
-                    }
+                    Marshal.Copy(fTemp, 0, (IntPtr)destPtr, rawInputSize);
+                }
+                else
+                {
+                    Unsafe.CopyBlock(destPtr, tPtr, byteCount);
                 }
             }
 
             UIntPool.Return(temp);
         }
-
         
+
+        /// <summary>
+        /// Lolz
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void ColorToVector4BithackBatched(Color[] source, Vector4[] dest)
+        {
+            fixed (Color* pSource = source )
+            fixed (Vector4* pDest = dest)
+            {
+                ColorToVector4BithackBatched(pSource, pDest, source.Length);
+            }
+        }
+
         /// <summary>
         /// Lol
         /// </summary>
@@ -180,6 +188,20 @@ namespace ImageSharp.Experimental
                     }
                 }
             }
+        }
+
+        private static readonly Vector4 ShiftVec = new Vector4(1f, 256f, 256f * 256f, 256f * 256f * 256f);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color Vector4ToColorFast(Vector4 vector)
+        {
+            vector = Vector4.Clamp(vector, Vector4.Zero, Vector4.One);
+            vector *= new Vector4(255f);
+            //vector += new Vector4(0.5f);
+            vector *= ShiftVec;
+
+            float val = Vector4.Dot(vector, Vector4.One);
+            return new Color( (uint)val);
         }
     }
 }

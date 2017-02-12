@@ -6,8 +6,11 @@
 namespace ImageSharp.Processing.Processors
 {
     using System;
+    using System.Buffers;
     using System.Numerics;
     using System.Threading.Tasks;
+
+    using ImageSharp.Experimental;
 
     /// <summary>
     /// Provides methods that allow the resizing of images using various algorithms.
@@ -45,7 +48,7 @@ namespace ImageSharp.Processing.Processors
         }
 
         /// <inheritdoc/>
-        protected override void OnApply(ImageBase<TColor> source, Rectangle sourceRectangle)
+        protected override unsafe void OnApply(ImageBase<TColor> source, Rectangle sourceRectangle)
         {
             // Jump out, we'll deal with that later.
             if (source.Width == this.Width && source.Height == this.Height && sourceRectangle == this.ResizeRectangle)
@@ -83,7 +86,7 @@ namespace ImageSharp.Processing.Processors
                             {
                                 // Y coordinates of source points
                                 int originY = (int)((y - startY) * heightFactor);
-
+                                
                                 for (int x = minX; x < maxX; x++)
                                 {
                                     // X coordinates of source points
@@ -107,31 +110,84 @@ namespace ImageSharp.Processing.Processors
                 using (PixelAccessor<TColor> sourcePixels = source.Lock())
                 using (PixelAccessor<TColor> firstPassPixels = new PixelAccessor<TColor>(width, source.Height))
                 {
-                    Parallel.For(
-                        0,
-                        sourceRectangle.Height,
-                        this.ParallelOptions,
-                        y =>
+                    if (typeof(TColor) == typeof(Color))
+                    {
+                        if (sourcePixels.Width % 2 != 0)
                         {
-                            for (int x = minX; x < maxX; x++)
-                            {
-                                // Ensure offsets are normalised for cropping and padding.
-                                Weight[] horizontalValues = this.HorizontalWeights[x - startX].Values;
+                            throw new NotImplementedException("Bzzz");
+                        }
 
-                                // Destination color components
-                                Vector4 destination = Vector4.Zero;
-
-                                for (int i = 0; i < horizontalValues.Length; i++)
+                        Parallel.For(
+                            0,
+                            sourceRectangle.Height,
+                            this.ParallelOptions,
+                            y =>
                                 {
-                                    Weight xw = horizontalValues[i];
-                                    destination += sourcePixels[xw.Index, y].ToVector4() * xw.Value;
-                                }
+                                    Color* rowPtr = (Color*)sourcePixels.DataPointer;
+                                    rowPtr += y * sourcePixels.Width;
 
-                                TColor d = default(TColor);
-                                d.PackFromVector4(destination);
-                                firstPassPixels[x, y] = d;
-                            }
-                        });
+                                    Vector4[] tempVectors = ArrayPool<Vector4>.Shared.Rent(sourcePixels.Width);
+
+                                    
+                                    fixed (Vector4* vPtr = tempVectors)
+                                    {
+                                        ExperimentalConverters.ColorToVector4BithackBatched(
+                                            rowPtr,
+                                            vPtr,
+                                            sourcePixels.Width);
+                                    }
+
+                                    for (int x = minX; x < maxX; x++)
+                                    {
+                                        // Ensure offsets are normalised for cropping and padding.
+                                        Weight[] horizontalValues = this.HorizontalWeights[x - startX].Values;
+
+                                        // Destination color components
+                                        Vector4 destination = Vector4.Zero;
+
+                                        for (int i = 0; i < horizontalValues.Length; i++)
+                                        {
+                                            Weight xw = horizontalValues[i];
+                                            destination += tempVectors[xw.Index] * xw.Value;
+                                        }
+
+                                        TColor d = default(TColor);
+                                        d.PackFromVector4(destination);
+                                        firstPassPixels[x, y] = d;
+                                    }
+
+                                    ArrayPool<Vector4>.Shared.Return(tempVectors);
+                                });
+                    }
+                    else
+                    {
+                        Parallel.For(
+                            0,
+                            sourceRectangle.Height,
+                            this.ParallelOptions,
+                            y =>
+                                {
+                                    for (int x = minX; x < maxX; x++)
+                                    {
+                                        // Ensure offsets are normalised for cropping and padding.
+                                        Weight[] horizontalValues = this.HorizontalWeights[x - startX].Values;
+
+                                        // Destination color components
+                                        Vector4 destination = Vector4.Zero;
+
+                                        for (int i = 0; i < horizontalValues.Length; i++)
+                                        {
+                                            Weight xw = horizontalValues[i];
+                                            destination += sourcePixels[xw.Index, y].ToVector4() * xw.Value;
+                                        }
+
+                                        TColor d = default(TColor);
+                                        d.PackFromVector4(destination);
+                                        firstPassPixels[x, y] = d;
+                                    }
+                                });
+                    }
+                    
 
                     // Now process the rows.
                     Parallel.For(
