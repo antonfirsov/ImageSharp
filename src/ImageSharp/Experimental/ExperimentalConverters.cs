@@ -147,9 +147,8 @@ namespace ImageSharp.Experimental
             public uint A;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Load(Color color)
+            public void Load(uint p)
             {
-                uint p = color.PackedValue;
                 this.R = p;
                 this.G = p >> Color.GreenShift;
                 this.B = p >> Color.BlueShift;
@@ -173,16 +172,13 @@ namespace ImageSharp.Experimental
             uint[] temp = UIntPool.Rent(rawInputSize + Vector<uint>.Count);
             float[] fTemp = Unsafe.As<float[]>(temp);
 
-            //RGBAUint helper = default(RGBAUint);
-
             fixed (uint* tPtr = temp)
             fixed (Color* cPtr = input)
             {
                 uint* src = (uint*)cPtr;
                 uint* srcEnd = src + input.Length;
                 uint* dst = tPtr;
-                //RGBAUint* rgbaPtr = (RGBAUint*)tPtr;
-
+                
                 for (; src < srcEnd; src++)
                 {
                     uint p = *src;
@@ -190,9 +186,6 @@ namespace ImageSharp.Experimental
                     *dst++ = p >> Color.GreenShift;
                     *dst++ = p >> Color.BlueShift;
                     *dst++ = p >> Color.AlphaShift;
-                    //helper.Load(input[i]);
-                    //*rgbaPtr = helper;
-                    //rgbaPtr++;
                 }
 
                 for (int i = 0; i < rawInputSize; i += Vector<uint>.Count)
@@ -206,9 +199,7 @@ namespace ImageSharp.Experimental
                     vf = (vf - magicFloat) * bVec;
                     vf.CopyTo(fTemp, i);
                 }
-
                 
-
                 fixed (Vector4* p = result)
                 {
                     uint byteCount = (uint) rawInputSize * sizeof(float);
@@ -224,6 +215,66 @@ namespace ImageSharp.Experimental
                 }
             }
             
+            UIntPool.Return(temp);
+        }
+
+        /// <summary>
+        /// Lolz
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void ColorToVector4BithackBatchedArrays2(Color[] input, Vector4[] result)
+        {
+            Vector<float> bVec = new Vector<float>(Magic.B);
+            Vector<uint> magicInt = new Vector<uint>(Magic.UInt);
+            Vector<float> magicFloat = new Vector<float>(Magic.Float);
+            Vector<uint> mask = new Vector<uint>(255);
+
+            int rawInputSize = input.Length * 4;
+
+            uint[] temp = UIntPool.Rent(rawInputSize + Vector<uint>.Count);
+            float[] fTemp = Unsafe.As<float[]>(temp);
+            
+            fixed (uint* tPtr = temp)
+            fixed (Color* cPtr = input)
+            {
+                uint* src = (uint*)cPtr;
+                uint* srcEnd = src + input.Length;
+                RGBAUint* dst = (RGBAUint*) tPtr;
+                
+                for (; src < srcEnd; src++, dst++)
+                {
+                    dst->Load(*src);
+                }
+
+                for (int i = 0; i < rawInputSize; i += Vector<uint>.Count)
+                {
+                    Vector<uint> vi = new Vector<uint>(temp, i);
+
+                    vi &= mask;
+                    vi |= magicInt;
+
+                    Vector<float> vf = Vector.AsVectorSingle(vi);
+                    vf = (vf - magicFloat) * bVec;
+                    vf.CopyTo(fTemp, i);
+                }
+
+
+
+                fixed (Vector4* p = result)
+                {
+                    uint byteCount = (uint)rawInputSize * sizeof(float);
+
+                    if (byteCount > 1024u)
+                    {
+                        Marshal.Copy(fTemp, 0, (IntPtr)p, rawInputSize);
+                    }
+                    else
+                    {
+                        Unsafe.CopyBlock(p, tPtr, (uint)byteCount);
+                    }
+                }
+            }
+
             UIntPool.Return(temp);
             //FloatPool.Return(fTemp);
         }
@@ -243,45 +294,12 @@ namespace ImageSharp.Experimental
                     Vector4 v;
                     Vector4 maxBytes = new Vector4(255);
 
-                    Color* cPtr = (Color*) cFixed;
+                    Color* cPtr = cFixed;
                     Color* cEnd = cPtr + input.Length;
                     Vector4* rPtr = rFixed;
                     for (; cPtr < cEnd; cPtr++, rPtr++)
                     {
                         v = new Vector4(cPtr->R, cPtr->G, cPtr->B, cPtr->A);
-                        v /= maxBytes;
-                        *rPtr = v;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Lolz
-        /// </summary>
-        /// <param name="input"></param>
-        /// <param name="result"></param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void ColorToVector4BasicBatched2(Color[] input, Vector4[] result)
-        {
-            fixed (Color* cFixed = input)
-            {
-                fixed (Vector4* rFixed = result)
-                {
-                    Vector4 v;
-                    Vector4 maxBytes = new Vector4(255);
-
-                    uint* cPtr = (uint*)cFixed;
-                    uint* cEnd = cPtr + input.Length;
-                    Vector4* rPtr = rFixed;
-                    for (; cPtr < cEnd; cPtr++, rPtr++)
-                    {
-                        uint c = *cPtr;
-                        uint r = c & 255u;
-                        uint g = (c >> Color.GreenShift) & 255u;
-                        uint b = (c >> Color.BlueShift) & 255u;
-                        uint a = (c >> Color.AlphaShift) & 255u;
-                        v = new Vector4((float)r, (float)g, (float)b, (float)a);
                         v /= maxBytes;
                         *rPtr = v;
                     }

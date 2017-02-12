@@ -51,7 +51,7 @@
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void Bithack()
         {
             ColorToVector4Bithack(this.input, this.result);
@@ -75,15 +75,15 @@
         }
 
         [Benchmark]
+        public void BithackBatched2()
+        {
+            ExperimentalConverters.ColorToVector4BithackBatchedArrays2(this.input, this.result);
+        }
+
+        //[Benchmark]
         public void BatchedPointers()
         {
             ExperimentalConverters.ColorToVector4BasicBatched(this.input, this.result);
-        }
-
-        [Benchmark]
-        public void BatchedPointers2()
-        {
-            ExperimentalConverters.ColorToVector4BasicBatched2(this.input, this.result);
         }
     }
 }
