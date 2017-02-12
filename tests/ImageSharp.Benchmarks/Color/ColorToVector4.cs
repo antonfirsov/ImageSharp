@@ -14,7 +14,7 @@
 
         private Vector4[] result;
 
-        [Params(32)]
+        [Params(16, 32, 256)]
         public int InputSize { get; set; }
 
         [Setup]
@@ -35,7 +35,7 @@
             }
         }
 
-        //[Benchmark(Baseline = true)]
+        [Benchmark(Baseline = true)]
         public void Standard()
         {
             ColorToVector4StandardArrays(this.input, this.result);
@@ -51,7 +51,7 @@
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Bithack()
         {
             ColorToVector4Bithack(this.input, this.result);
@@ -74,35 +74,16 @@
             ExperimentalConverters.ColorToVector4BithackBatchedArrays(this.input, this.result);
         }
 
-        //[Benchmark]
-        public unsafe void BatchedPointers()
+        [Benchmark]
+        public void BatchedPointers()
         {
-            ColorToVector4ImplBatchedPointers(this.input, this.result);
+            ExperimentalConverters.ColorToVector4BasicBatched(this.input, this.result);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe void ColorToVector4ImplBatchedPointers(Color[] input, Vector4[] result)
+        [Benchmark]
+        public void BatchedPointers2()
         {
-            fixed (Color* cFixed = input)
-            {
-                fixed (Vector4* rFixed = result)
-                {
-                    Color c;
-                    Vector4 v;
-                    Vector4 maxBytes = new Vector4(255);
-
-                    Color* cPtr = cFixed;
-                    Vector4* rPtr = rFixed;
-                    for (int i = 0; i < input.Length; i++)
-                    {
-                        v = new Vector4(cPtr->R, cPtr->G, cPtr->B, cPtr->A);
-                        v /= maxBytes;
-                        *rPtr = v;
-                        cPtr++;
-                        rPtr++;
-                    }
-                }
-            }
+            ExperimentalConverters.ColorToVector4BasicBatched2(this.input, this.result);
         }
     }
 }

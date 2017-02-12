@@ -23,22 +23,22 @@ namespace ImageSharp
         /// <summary>
         /// The shift count for the red component
         /// </summary>
-        private const int RedShift = 0;
+        internal const int RedShift = 0;
 
         /// <summary>
         /// The shift count for the green component
         /// </summary>
-        private const int GreenShift = 8;
+        internal const int GreenShift = 8;
 
         /// <summary>
         /// The shift count for the blue component
         /// </summary>
-        private const int BlueShift = 16;
+        internal const int BlueShift = 16;
 
         /// <summary>
         /// The shift count for the alpha component
         /// </summary>
-        private const int AlphaShift = 24;
+        internal const int AlphaShift = 24;
 
         /// <summary>
         /// The maximum byte value.

@@ -14,14 +14,11 @@ namespace ImageSharp.Tests.Colors
     using Xunit;
     using Xunit.Abstractions;
 
-    public class ExperimentalConvertersTests
+    public class ExperimentalConvertersTests : MeasureFixture
     {
-
-        private ITestOutputHelper Output { get; }
-
         public ExperimentalConvertersTests(ITestOutputHelper output)
+            : base(output)
         {
-            this.Output = output;
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -45,21 +42,21 @@ namespace ImageSharp.Tests.Colors
             this.Output.WriteLine(Vector<float>.Count.ToString());
         }
 
-        [Fact]
-        public void UnsafeShit()
-        {
-            Color[] foo = { new Color(1, 2, 3, 4), new Color(10, 20, 30, 42) };
+        //[Fact]
+        //public void UnsafeShit()
+        //{
+        //    Color[] foo = { new Color(1, 2, 3, 4), new Color(10, 20, 30, 42) };
 
-            uint[] bar = Unsafe.As<uint[]>(foo);
+        //    uint[] bar = Unsafe.As<uint[]>(foo);
 
-            uint val1 = bar[1];
+        //    uint val1 = bar[1];
 
-            Color c1 = new Color(val1);
-            Assert.Equal(c1.R, foo[1].R);
-            Assert.Equal(c1.G, foo[1].G);
-            Assert.Equal(c1.B, foo[1].B);
-            Assert.Equal(c1.A, foo[1].A);
-        }
+        //    Color c1 = new Color(val1);
+        //    Assert.Equal(c1.R, foo[1].R);
+        //    Assert.Equal(c1.G, foo[1].G);
+        //    Assert.Equal(c1.B, foo[1].B);
+        //    Assert.Equal(c1.A, foo[1].A);
+        //}
 
         [Theory]
         [InlineData(10, 20, 30, 255)]
@@ -98,11 +95,31 @@ namespace ImageSharp.Tests.Colors
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
-        public void ColorToVector4BithackBatchedArrays()
+        private static Color[] GenerateColorInput(int count)
         {
-            Color[] input = { new Color(1, 2, 3, 4), new Color(10, 20, 30, 42) };
-            Vector4[] result = new Vector4[input.Length];
+            Color[] result = new Color[count];
+            Random rnd = new Random(42);
+            for (int i = 0; i < count; i++)
+            {
+                result[i] = new Color
+                                {
+                                    R = (byte)rnd.Next(255),
+                                    G = (byte)rnd.Next(255),
+                                    B = (byte)rnd.Next(255),
+                                    A = (byte)rnd.Next(255)
+                                };
+            }
+            return result;
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(10)]
+        [InlineData(100)]
+        public void ColorToVector4BithackBatchedArrays(int inputSize)
+        {
+            Color[] input = GenerateColorInput(inputSize);
+            Vector4[] result = new Vector4[input.Length + 2];
 
             ExperimentalConverters.ColorToVector4BithackBatchedArrays(input, result);
 
@@ -113,22 +130,55 @@ namespace ImageSharp.Tests.Colors
             }
         }
 
+        [Theory]
+        [InlineData(2)]
+        [InlineData(10)]
+        [InlineData(100)]
+        public void ColorToVector4BasicBatched(int inputSize)
+        {
+            Color[] input = GenerateColorInput(inputSize);
+            Vector4[] result = new Vector4[input.Length + 2];
+
+            ExperimentalConverters.ColorToVector4BasicBatched(input, result);
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                Vector4 expected = input[i].ToVector4();
+                Assert.Equal(expected, result[i], new ApproximateFloatComparer(0.01f));
+            }
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(10)]
+        [InlineData(100)]
+        public void ColorToVector4BasicBatched2(int inputSize)
+        {
+            Color[] input = GenerateColorInput(inputSize);
+            Vector4[] result = new Vector4[input.Length + 2];
+
+            ExperimentalConverters.ColorToVector4BasicBatched2(input, result);
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                Vector4 expected = input[i].ToVector4();
+                Assert.Equal(expected, result[i], new ApproximateFloatComparer(0.01f));
+            }
+        }
+
+
         [Fact]
         public void ColorToVector4BithackBatchedArraysBenchmark()
         {
-            Color[] input =
-                {
-                    new Color(1, 2, 3, 4), new Color(10, 20, 30, 42), new Color(1, 2, 3, 4), new Color(10, 20, 30, 42),
-                    new Color(1, 2, 3, 4), new Color(10, 20, 30, 42), new Color(1, 2, 3, 4), new Color(10, 20, 30, 42),
-                    new Color(1, 2, 3, 4), new Color(10, 20, 30, 42), new Color(1, 2, 3, 4), new Color(10, 20, 30, 42),
-                    new Color(1, 2, 3, 4), new Color(10, 20, 30, 42), new Color(1, 2, 3, 4), new Color(10, 20, 30, 42),
-                };
-            Vector4[] result = new Vector4[input.Length];
+            Color[] input = GenerateColorInput(100);
+            Vector4[] result = new Vector4[input.Length + 2];
 
-            for (int i = 0; i < 1000000; i++)
-            {
-                ExperimentalConverters.ColorToVector4BithackBatchedArrays(input, result);
-            }
+            this.Measure(
+                1000000,
+                () =>
+                    {
+                        ExperimentalConverters.ColorToVector4BithackBatchedArrays(input, result);
+                    });
         }
     }
 }

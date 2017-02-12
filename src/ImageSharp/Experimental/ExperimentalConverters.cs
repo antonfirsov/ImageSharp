@@ -139,6 +139,24 @@ namespace ImageSharp.Experimental
             //UIntPool.Return(temp);
         }
 
+        private struct RGBAUint
+        {
+            public uint R;
+            public uint G;
+            public uint B;
+            public uint A;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Load(Color color)
+            {
+                uint p = color.PackedValue;
+                this.R = p;
+                this.G = p >> Color.GreenShift;
+                this.B = p >> Color.BlueShift;
+                this.A = p >> Color.AlphaShift;
+            }
+        }
+
         /// <summary>
         /// Lolz
         /// </summary>
@@ -146,33 +164,129 @@ namespace ImageSharp.Experimental
         public static unsafe void ColorToVector4BithackBatchedArrays(Color[] input, Vector4[] result)
         {
             Vector<float> bVec = new Vector<float>(Magic.B);
-            Vector<uint> unpack = new Vector<uint>(UnpackVectorData);
             Vector<uint> magicInt = new Vector<uint>(Magic.UInt);
             Vector<float> magicFloat = new Vector<float>(Magic.Float);
             Vector<uint> mask = new Vector<uint>(255);
 
-            float[] temp = FloatPool.Rent(input.Length * 4 + Vector<float>.Count);
+            int rawInputSize = input.Length * 4;
+            
+            uint[] temp = UIntPool.Rent(rawInputSize + Vector<uint>.Count);
+            float[] fTemp = Unsafe.As<float[]>(temp);
 
-            for (int i = 0; i < input.Length; i++)
+            //RGBAUint helper = default(RGBAUint);
+
+            fixed (uint* tPtr = temp)
+            fixed (Color* cPtr = input)
             {
-                
-                Vector<uint> vi = new Vector<uint>(input[i].PackedValue);
-                
-                vi /= unpack;
-                vi &= mask;
-                vi |= magicInt;
+                uint* src = (uint*)cPtr;
+                uint* srcEnd = src + input.Length;
+                uint* dst = tPtr;
+                //RGBAUint* rgbaPtr = (RGBAUint*)tPtr;
 
-                Vector<float> vf =  Vector.AsVectorSingle(vi);
-                vf = (vf - magicFloat) * bVec;
-                vf.CopyTo(temp, i * 4);
-            }
+                for (; src < srcEnd; src++)
+                {
+                    uint p = *src;
+                    *dst++ = p;
+                    *dst++ = p >> Color.GreenShift;
+                    *dst++ = p >> Color.BlueShift;
+                    *dst++ = p >> Color.AlphaShift;
+                    //helper.Load(input[i]);
+                    //*rgbaPtr = helper;
+                    //rgbaPtr++;
+                }
 
-            fixed (Vector4* resultPtr  = result)
-            {
-                Marshal.Copy(temp, 0, (IntPtr)resultPtr, input.Length * 4);
+                for (int i = 0; i < rawInputSize; i += Vector<uint>.Count)
+                {
+                    Vector<uint> vi = new Vector<uint>(temp, i);
+
+                    vi &= mask;
+                    vi |= magicInt;
+
+                    Vector<float> vf = Vector.AsVectorSingle(vi);
+                    vf = (vf - magicFloat) * bVec;
+                    vf.CopyTo(fTemp, i);
+                }
+
+                
+
+                fixed (Vector4* p = result)
+                {
+                    uint byteCount = (uint) rawInputSize * sizeof(float);
+
+                    if (byteCount > 1024u)
+                    {
+                        Marshal.Copy(fTemp, 0, (IntPtr)p, rawInputSize);
+                    }
+                    else
+                    {
+                        Unsafe.CopyBlock(p, tPtr, (uint)byteCount);
+                    }
+                }
             }
             
-            FloatPool.Return(temp);
+            UIntPool.Return(temp);
+            //FloatPool.Return(fTemp);
+        }
+
+        /// <summary>
+        /// Lol
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="result"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void ColorToVector4BasicBatched(Color[] input, Vector4[] result)
+        {
+            fixed (Color* cFixed = input)
+            {
+                fixed (Vector4* rFixed = result)
+                {
+                    Vector4 v;
+                    Vector4 maxBytes = new Vector4(255);
+
+                    Color* cPtr = (Color*) cFixed;
+                    Color* cEnd = cPtr + input.Length;
+                    Vector4* rPtr = rFixed;
+                    for (; cPtr < cEnd; cPtr++, rPtr++)
+                    {
+                        v = new Vector4(cPtr->R, cPtr->G, cPtr->B, cPtr->A);
+                        v /= maxBytes;
+                        *rPtr = v;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Lolz
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="result"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void ColorToVector4BasicBatched2(Color[] input, Vector4[] result)
+        {
+            fixed (Color* cFixed = input)
+            {
+                fixed (Vector4* rFixed = result)
+                {
+                    Vector4 v;
+                    Vector4 maxBytes = new Vector4(255);
+
+                    uint* cPtr = (uint*)cFixed;
+                    uint* cEnd = cPtr + input.Length;
+                    Vector4* rPtr = rFixed;
+                    for (; cPtr < cEnd; cPtr++, rPtr++)
+                    {
+                        uint c = *cPtr;
+                        uint r = c & 255u;
+                        uint g = (c >> Color.GreenShift) & 255u;
+                        uint b = (c >> Color.BlueShift) & 255u;
+                        uint a = (c >> Color.AlphaShift) & 255u;
+                        v = new Vector4((float)r, (float)g, (float)b, (float)a);
+                        v /= maxBytes;
+                        *rPtr = v;
+                    }
+                }
+            }
         }
     }
 }
